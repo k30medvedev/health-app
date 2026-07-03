@@ -2,6 +2,8 @@ Feature: Analyses API
 
   Background:
     * url baseUrl
+    * def auth = call read('login.feature')
+    * configure headers = { Authorization: '#("Bearer " + auth.token)' }
     * def email = 'karate-analysis-' + karate.uuid() + '@example.com'
     Given path '/api/users'
     And request { fullName: 'Analysis Owner', email: '#(email)' }

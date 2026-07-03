@@ -2,6 +2,8 @@ Feature: Users API
 
   Background:
     * url baseUrl
+    * def auth = call read('login.feature')
+    * configure headers = { Authorization: '#("Bearer " + auth.token)' }
 
   Scenario: create a user returns 201 with a Location header
     * def email = 'karate-' + karate.uuid() + '@example.com'

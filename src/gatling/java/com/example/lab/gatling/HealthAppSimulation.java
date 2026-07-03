@@ -36,28 +36,43 @@ public class HealthAppSimulation extends Simulation {
 		return row;
 	}).iterator();
 
+	// Every scenario starts by logging in with the demo credentials and reusing the
+	// token as a Bearer header on the requests that follow, since the API now requires it.
+	private final ChainBuilder login = exec(http("Login")
+			.post("/api/auth/login")
+			.body(StringBody("{ \"username\": \"demo\", \"password\": \"demo123\" }"))
+			.check(status().is(200))
+			.check(jsonPath("$.token").saveAs("token")));
+
 	private final ChainBuilder createUserReadAnalysis = feed(emailFeeder)
+			.exec(login)
 			.exec(http("Create user")
 					.post("/api/users")
+					.header("Authorization", "Bearer #{token}")
 					.body(StringBody("{ \"fullName\": \"Gatling User\", \"email\": \"#{email}\" }"))
 					.check(status().is(201))
 					.check(jsonPath("$.id").saveAs("userId")))
 			.exec(http("Get user by id")
 					.get("/api/users/#{userId}")
+					.header("Authorization", "Bearer #{token}")
 					.check(status().is(200)))
 			.exec(http("Create analysis for user")
 					.post("/api/users/#{userId}/analyses")
+					.header("Authorization", "Bearer #{token}")
 					.body(StringBody("{ \"testName\": \"Hemoglobin\", \"resultValue\": \"145\", "
 							+ "\"unit\": \"g/L\", \"referenceRange\": \"130-160\", \"takenAt\": \"2026-01-01\" }"))
 					.check(status().is(201))
 					.check(jsonPath("$.id").saveAs("analysisId")))
 			.exec(http("Get analysis by id")
 					.get("/api/analyses/#{analysisId}")
+					.header("Authorization", "Bearer #{token}")
 					.check(status().is(200)));
 
-	private final ChainBuilder browseUsers = exec(http("List users")
-			.get("/api/users")
-			.check(status().is(200)));
+	private final ChainBuilder browseUsers = exec(login)
+			.exec(http("List users")
+					.get("/api/users")
+					.header("Authorization", "Bearer #{token}")
+					.check(status().is(200)));
 
 	private final ScenarioBuilder createAndReadJourney = scenario("Create user, add analysis, read it back")
 			.exec(createUserReadAnalysis);

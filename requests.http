@@ -1,10 +1,41 @@
-### Health check
+### Health check (public, no auth needed)
 GET {{baseUrl}}/actuator/health
+
+
+### Log in with the demo credentials to get a bearer token
+# Everything below needs this: run it first, the token is reused automatically.
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "demo123"
+}
+
+> {%
+    client.test("status is 200", () => client.assert(response.status === 200));
+    client.global.set("token", response.body.token);
+%}
+
+
+### Wrong credentials -> 401
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "wrong"
+}
+
+> {%
+    client.test("status is 401", () => client.assert(response.status === 401));
+%}
 
 
 ### Create a user
 # 201 Created, captures the id for the requests below
 POST {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -18,8 +49,23 @@ Content-Type: application/json
 %}
 
 
+### Create a user without a token -> 401
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "fullName": "No Token",
+  "email": "no-token@example.com"
+}
+
+> {%
+    client.test("status is 401", () => client.assert(response.status === 401));
+%}
+
+
 ### Create a second user (used for the analyses examples below)
 POST {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -35,6 +81,7 @@ Content-Type: application/json
 
 ### Create a user with an invalid body -> 400
 POST {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -49,6 +96,7 @@ Content-Type: application/json
 
 ### Create a user with a duplicate email -> 409
 POST {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -63,14 +111,17 @@ Content-Type: application/json
 
 ### List users (paged)
 GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
 
 
 ### Get a user by id
 GET {{baseUrl}}/api/users/{{userId}}
+Authorization: Bearer {{token}}
 
 
 ### Get a user that does not exist -> 404
 GET {{baseUrl}}/api/users/999999
+Authorization: Bearer {{token}}
 
 > {%
     client.test("status is 404", () => client.assert(response.status === 404));
@@ -79,6 +130,7 @@ GET {{baseUrl}}/api/users/999999
 
 ### Add an analysis for the user
 POST {{baseUrl}}/api/users/{{userId}}/analyses
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -97,6 +149,7 @@ Content-Type: application/json
 
 ### Add an analysis with an invalid body -> 400
 POST {{baseUrl}}/api/users/{{userId}}/analyses
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -112,6 +165,7 @@ Content-Type: application/json
 
 ### Add an analysis for a user that does not exist -> 404
 POST {{baseUrl}}/api/users/999999/analyses
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -129,14 +183,17 @@ Content-Type: application/json
 
 ### List a user's analyses
 GET {{baseUrl}}/api/users/{{userId}}/analyses
+Authorization: Bearer {{token}}
 
 
 ### Get an analysis by id
 GET {{baseUrl}}/api/analyses/{{analysisId}}
+Authorization: Bearer {{token}}
 
 
 ### Delete an analysis
 DELETE {{baseUrl}}/api/analyses/{{analysisId}}
+Authorization: Bearer {{token}}
 
 > {%
     client.test("status is 204", () => client.assert(response.status === 204));
@@ -145,6 +202,7 @@ DELETE {{baseUrl}}/api/analyses/{{analysisId}}
 
 ### Confirm the analysis is gone -> 404
 GET {{baseUrl}}/api/analyses/{{analysisId}}
+Authorization: Bearer {{token}}
 
 > {%
     client.test("status is 404", () => client.assert(response.status === 404));
@@ -152,16 +210,19 @@ GET {{baseUrl}}/api/analyses/{{analysisId}}
 
 
 ### Feign demo: list users through the declarative client instead of a plain HttpClient
+# No Authorization header needed here, the Feign client attaches its own token internally.
 GET {{baseUrl}}/api/demo/feign/users
+Authorization: Bearer {{token}}
 
 
 ### Feign demo: get a user through the declarative client
 GET {{baseUrl}}/api/demo/feign/users/{{userId}}
+Authorization: Bearer {{token}}
 
 
-### OpenAPI spec (raw JSON, Swagger UI is at /swagger-ui.html)
+### OpenAPI spec (public, raw JSON, Swagger UI is at /swagger-ui.html)
 GET {{baseUrl}}/v3/api-docs
 
 
-### Metrics for Prometheus
+### Metrics for Prometheus (public)
 GET {{baseUrl}}/actuator/prometheus

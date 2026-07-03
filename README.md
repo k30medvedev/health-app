@@ -24,15 +24,17 @@ A user can have many analyses, each analysis belongs to exactly one user.
 
 OpenAPI docs are served at /swagger-ui.html once the app is running.
 
+## Authentication
+
+Every endpoint under /api except /api/auth/login requires a bearer JWT. This is a stub for demo purposes, not real user management: there is one hardcoded credential, demo / demo123, and POST /api/auth/login hands back a signed token if it matches. Spring Security validates that token as an OAuth2 resource server on every other request. The signing secret lives in application.yml as a lab-only placeholder and would move to an env var or a secrets manager in a real deployment. The Feign demo client (/api/demo/feign/*) authenticates itself the same way through a request interceptor, so it keeps working without any manual token handling.
+
+```
+curl -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"demo\", \"password\": \"demo123\"}"
+```
+
 ## Trying it out quickly
 
-The file requests.http at the repository root has ready made example requests for every endpoint, including invalid bodies and duplicate/missing id cases so you can see the 400/404/409 responses too. Open it in IntelliJ IDEA or any editor with the HTTP Client plugin, pick the dev environment from http-client.env.json, and click the green run arrow next to a request. Later requests reuse the id captured from the "Create a user" request, so running the file top to bottom just works.
-
-If you prefer curl:
-
-```
-curl -X POST http://localhost:8080/api/users -H "Content-Type: application/json" -d "{\"fullName\": \"Ivan Petrov\", \"email\": \"ivan.petrov@example.com\"}"
-```
+The file requests.http at the repository root has ready made example requests for every endpoint, including the login call, invalid bodies, a missing token, and duplicate/missing id cases so you can see the 400/401/404/409 responses too. Open it in IntelliJ IDEA or any editor with the HTTP Client plugin, pick the dev environment from http-client.env.json, and click the green run arrow next to a request starting with login. Later requests reuse the token and the id captured from earlier ones, so running the file top to bottom just works.
 
 ## Running locally
 

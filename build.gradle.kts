@@ -36,12 +36,15 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 	implementation("org.springframework.boot:spring-boot-starter-opentelemetry")
 	implementation("io.micrometer:micrometer-registry-prometheus")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 
 	runtimeOnly("com.h2database:h2")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-jackson")
+	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("io.karatelabs:karate-junit5:1.5.2")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.4.2")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
