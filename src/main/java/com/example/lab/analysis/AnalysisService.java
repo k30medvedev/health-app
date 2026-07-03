@@ -44,6 +44,7 @@ public class AnalysisService {
 		return AnalysisResponse.from(getOrThrow(id));
 	}
 
+	@Transactional
 	public void delete(Long id) {
 		var analysis = getOrThrow(id);
 		analysisRepository.delete(analysis);
