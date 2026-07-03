@@ -28,6 +28,56 @@ jobs:
       - name: Build and test
         run: gradle build --no-daemon
 
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dockerfile-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hadolint
+        uses: hadolint/hadolint-action@v3.3.0
+        with:
+          dockerfile: Dockerfile
+
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy dependency report (all severities, non-blocking)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-deps.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-deps.sarif
+          category: dependency-scan
+
+      - name: Trivy dependency gate (fails build on CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: CRITICAL
+          exit-code: "1"
+
   codeql:
     runs-on: ubuntu-latest
     needs: build-test
@@ -72,6 +122,7 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
+          category: container-scan
 
       - name: Trivy gate (fails build on CRITICAL)
         uses: aquasecurity/trivy-action@v0.36.0
