@@ -1,0 +1,45 @@
+name: performance-test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+
+jobs:
+  gatling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start the app
+        run: docker compose up -d --build app
+
+      - name: Wait for the app to be healthy
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/actuator/health && break
+            sleep 2
+          done
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "26"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.1"
+
+      - name: Run Gatling simulation
+        run: gradle gatlingRun -DbaseUrl=http://localhost:8080 --no-daemon
+
+      - name: Upload Gatling report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatling-report
+          path: build/reports/gatling/
+
+      - name: Stop the app
+        if: always()
+        run: docker compose down
