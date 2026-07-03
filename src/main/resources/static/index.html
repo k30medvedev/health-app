@@ -39,9 +39,9 @@
 
 	<section>
 		<h2>Users</h2>
-		<form id="user-form">
-			<input id="user-fullName" placeholder="Full name" required>
-			<input id="user-email" placeholder="Email" type="email" required>
+		<form id="user-form" novalidate>
+			<input id="user-fullName" placeholder="Full name">
+			<input id="user-email" placeholder="Email">
 			<button type="submit">Add user</button>
 		</form>
 		<table>
@@ -52,12 +52,12 @@
 
 	<section id="analyses-section" style="display: none;">
 		<h2>Analyses for <span id="selected-user-label"></span></h2>
-		<form id="analysis-form">
-			<input id="analysis-testName" placeholder="Test name" required>
-			<input id="analysis-resultValue" placeholder="Result" required>
+		<form id="analysis-form" novalidate>
+			<input id="analysis-testName" placeholder="Test name">
+			<input id="analysis-resultValue" placeholder="Result">
 			<input id="analysis-unit" placeholder="Unit">
 			<input id="analysis-referenceRange" placeholder="Reference range">
-			<input id="analysis-takenAt" type="date" required>
+			<input id="analysis-takenAt" type="date">
 			<button type="submit">Add analysis</button>
 		</form>
 		<table>
@@ -89,6 +89,9 @@
 			try {
 				const body = await response.json();
 				if (body.detail) detail = body.detail;
+				if (Array.isArray(body.errors) && body.errors.length > 0) {
+					detail += ': ' + body.errors.join(', ');
+				}
 			} catch (ignored) {}
 			throw new Error(detail);
 		}
@@ -144,8 +147,12 @@
 	document.getElementById('user-form').addEventListener('submit', async (event) => {
 		event.preventDefault();
 		showError('');
-		const fullName = document.getElementById('user-fullName').value;
-		const email = document.getElementById('user-email').value;
+		const fullName = document.getElementById('user-fullName').value.trim();
+		const email = document.getElementById('user-email').value.trim();
+		if (!fullName || !email) {
+			showError('Full name and email are both required.');
+			return;
+		}
 		try {
 			await api('/api/users', { method: 'POST', body: JSON.stringify({ fullName, email }) });
 			document.getElementById('user-form').reset();
@@ -190,12 +197,16 @@
 		event.preventDefault();
 		showError('');
 		const body = {
-			testName: document.getElementById('analysis-testName').value,
-			resultValue: document.getElementById('analysis-resultValue').value,
-			unit: document.getElementById('analysis-unit').value || null,
-			referenceRange: document.getElementById('analysis-referenceRange').value || null,
+			testName: document.getElementById('analysis-testName').value.trim(),
+			resultValue: document.getElementById('analysis-resultValue').value.trim(),
+			unit: document.getElementById('analysis-unit').value.trim() || null,
+			referenceRange: document.getElementById('analysis-referenceRange').value.trim() || null,
 			takenAt: document.getElementById('analysis-takenAt').value
 		};
+		if (!body.testName || !body.resultValue || !body.takenAt) {
+			showError('Test name, result and taken-at date are required.');
+			return;
+		}
 		try {
 			await api('/api/users/' + selectedUserId + '/analyses', { method: 'POST', body: JSON.stringify(body) });
 			document.getElementById('analysis-form').reset();
