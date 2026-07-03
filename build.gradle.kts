@@ -39,6 +39,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-jackson")
+	testImplementation("io.karatelabs:karate-junit5:1.5.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
