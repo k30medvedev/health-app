@@ -29,13 +29,11 @@ management:
       exposure:
         include: health,info,prometheus
   tracing:
-    sampling:
-      probability: 1.0
-  opentelemetry:
-    tracing:
+    enabled: false
+  otlp:
+    metrics:
       export:
-        otlp:
-          endpoint: http://localhost:4318/v1/traces
+        enabled: false
 
 clients:
   health-app:
@@ -56,3 +54,23 @@ feign:
 logging:
   level:
     com.example.lab.client: DEBUG
+
+---
+# Active when the app is run together with the observability stack (see docker-compose.yml),
+# where Tempo is actually reachable. Metrics stay on the pull model: Prometheus scrapes
+# /actuator/prometheus directly, there is no OTLP metrics receiver in this stack.
+spring:
+  config:
+    activate:
+      on-profile: observability
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
