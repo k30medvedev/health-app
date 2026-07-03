@@ -32,7 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
-	implementation("org.flywaydb:flyway-database-h2")
+	implementation("org.flywaydb:flyway-database-h2:12.4.0")
 
 	runtimeOnly("com.h2database:h2")
 
