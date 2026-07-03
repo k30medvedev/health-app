@@ -2,10 +2,12 @@ package com.example.lab;
 
 import com.intuit.karate.junit5.Karate;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ResourceLock("postgres-container")
 class ApiKarateTest extends AbstractIntegrationTest {
 
 	@LocalServerPort
