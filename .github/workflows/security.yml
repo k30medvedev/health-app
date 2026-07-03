@@ -23,7 +23,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.6"
+          gradle-version: "9.6.1"
 
       - name: Build and test
         run: gradle build --no-daemon
@@ -45,7 +45,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.6"
+          gradle-version: "9.6.1"
 
       - name: Build for CodeQL
         run: gradle assemble --no-daemon
