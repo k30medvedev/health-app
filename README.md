@@ -24,6 +24,16 @@ A user can have many analyses, each analysis belongs to exactly one user.
 
 OpenAPI docs are served at /swagger-ui.html once the app is running.
 
+## Trying it out quickly
+
+The file requests.http at the repository root has ready made example requests for every endpoint, including invalid bodies and duplicate/missing id cases so you can see the 400/404/409 responses too. Open it in IntelliJ IDEA or any editor with the HTTP Client plugin, pick the dev environment from http-client.env.json, and click the green run arrow next to a request. Later requests reuse the id captured from the "Create a user" request, so running the file top to bottom just works.
+
+If you prefer curl:
+
+```
+curl -X POST http://localhost:8080/api/users -H "Content-Type: application/json" -d "{\"fullName\": \"Ivan Petrov\", \"email\": \"ivan.petrov@example.com\"}"
+```
+
 ## Running locally
 
 With Docker:

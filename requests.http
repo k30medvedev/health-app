@@ -1,0 +1,167 @@
+### Health check
+GET {{baseUrl}}/actuator/health
+
+
+### Create a user
+# 201 Created, captures the id for the requests below
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "fullName": "Ivan Petrov",
+  "email": "ivan.petrov@example.com"
+}
+
+> {%
+    client.test("status is 201", () => client.assert(response.status === 201));
+    client.global.set("userId", response.body.id);
+%}
+
+
+### Create a second user (used for the analyses examples below)
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "fullName": "Maria Sidorova",
+  "email": "maria.sidorova@example.com"
+}
+
+> {%
+    client.test("status is 201", () => client.assert(response.status === 201));
+    client.global.set("secondUserId", response.body.id);
+%}
+
+
+### Create a user with an invalid body -> 400
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "fullName": "",
+  "email": "not-an-email"
+}
+
+> {%
+    client.test("status is 400", () => client.assert(response.status === 400));
+%}
+
+
+### Create a user with a duplicate email -> 409
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "fullName": "Duplicate Ivan",
+  "email": "ivan.petrov@example.com"
+}
+
+> {%
+    client.test("status is 409", () => client.assert(response.status === 409));
+%}
+
+
+### List users (paged)
+GET {{baseUrl}}/api/users
+
+
+### Get a user by id
+GET {{baseUrl}}/api/users/{{userId}}
+
+
+### Get a user that does not exist -> 404
+GET {{baseUrl}}/api/users/999999
+
+> {%
+    client.test("status is 404", () => client.assert(response.status === 404));
+%}
+
+
+### Add an analysis for the user
+POST {{baseUrl}}/api/users/{{userId}}/analyses
+Content-Type: application/json
+
+{
+  "testName": "Hemoglobin",
+  "resultValue": "145",
+  "unit": "g/L",
+  "referenceRange": "130-160",
+  "takenAt": "2026-01-01"
+}
+
+> {%
+    client.test("status is 201", () => client.assert(response.status === 201));
+    client.global.set("analysisId", response.body.id);
+%}
+
+
+### Add an analysis with an invalid body -> 400
+POST {{baseUrl}}/api/users/{{userId}}/analyses
+Content-Type: application/json
+
+{
+  "testName": "",
+  "resultValue": "",
+  "takenAt": "2099-01-01"
+}
+
+> {%
+    client.test("status is 400", () => client.assert(response.status === 400));
+%}
+
+
+### Add an analysis for a user that does not exist -> 404
+POST {{baseUrl}}/api/users/999999/analyses
+Content-Type: application/json
+
+{
+  "testName": "Hemoglobin",
+  "resultValue": "145",
+  "unit": "g/L",
+  "referenceRange": "130-160",
+  "takenAt": "2026-01-01"
+}
+
+> {%
+    client.test("status is 404", () => client.assert(response.status === 404));
+%}
+
+
+### List a user's analyses
+GET {{baseUrl}}/api/users/{{userId}}/analyses
+
+
+### Get an analysis by id
+GET {{baseUrl}}/api/analyses/{{analysisId}}
+
+
+### Delete an analysis
+DELETE {{baseUrl}}/api/analyses/{{analysisId}}
+
+> {%
+    client.test("status is 204", () => client.assert(response.status === 204));
+%}
+
+
+### Confirm the analysis is gone -> 404
+GET {{baseUrl}}/api/analyses/{{analysisId}}
+
+> {%
+    client.test("status is 404", () => client.assert(response.status === 404));
+%}
+
+
+### Feign demo: list users through the declarative client instead of a plain HttpClient
+GET {{baseUrl}}/api/demo/feign/users
+
+
+### Feign demo: get a user through the declarative client
+GET {{baseUrl}}/api/demo/feign/users/{{userId}}
+
+
+### OpenAPI spec (raw JSON, Swagger UI is at /swagger-ui.html)
+GET {{baseUrl}}/v3/api-docs
+
+
+### Metrics for Prometheus
+GET {{baseUrl}}/actuator/prometheus
