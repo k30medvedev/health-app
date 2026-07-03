@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     full_name  VARCHAR(255) NOT NULL,
     email      VARCHAR(255) NOT NULL,
     created_at TIMESTAMP    NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE analyses (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id         BIGINT       NOT NULL,
     test_name       VARCHAR(255) NOT NULL,
     result_value    VARCHAR(100) NOT NULL,

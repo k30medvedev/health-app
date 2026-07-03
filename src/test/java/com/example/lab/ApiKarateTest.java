@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ApiKarateTest {
+class ApiKarateTest extends AbstractIntegrationTest {
 
 	@LocalServerPort
 	private int port;
