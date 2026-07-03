@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Health App</title>
+	<style>
+		body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+		h1 { margin-bottom: 0.25rem; }
+		.hint { color: #666; font-size: 0.9rem; margin-top: 0; }
+		section { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; }
+		form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+		input { padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
+		button { padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: #2563eb; color: white; cursor: pointer; }
+		button.secondary { background: #6b7280; }
+		button.danger { background: #dc2626; }
+		table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+		th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; }
+		tr.selected { background: #eff6ff; }
+		#error { color: #dc2626; min-height: 1.2rem; }
+		#app { display: none; }
+	</style>
+</head>
+<body>
+
+<h1>Health App</h1>
+<p class="hint">Demo UI on top of the JSON API. Log in with demo / demo123.</p>
+<p id="error"></p>
+
+<section id="login-section">
+	<form id="login-form">
+		<input id="login-username" placeholder="username" value="demo">
+		<input id="login-password" placeholder="password" type="password" value="demo123">
+		<button type="submit">Log in</button>
+	</form>
+</section>
+
+<div id="app">
+	<button class="secondary" id="logout-btn">Log out</button>
+
+	<section>
+		<h2>Users</h2>
+		<form id="user-form">
+			<input id="user-fullName" placeholder="Full name" required>
+			<input id="user-email" placeholder="Email" type="email" required>
+			<button type="submit">Add user</button>
+		</form>
+		<table>
+			<thead><tr><th>Id</th><th>Full name</th><th>Email</th><th></th></tr></thead>
+			<tbody id="users-body"></tbody>
+		</table>
+	</section>
+
+	<section id="analyses-section" style="display: none;">
+		<h2>Analyses for <span id="selected-user-label"></span></h2>
+		<form id="analysis-form">
+			<input id="analysis-testName" placeholder="Test name" required>
+			<input id="analysis-resultValue" placeholder="Result" required>
+			<input id="analysis-unit" placeholder="Unit">
+			<input id="analysis-referenceRange" placeholder="Reference range">
+			<input id="analysis-takenAt" type="date" required>
+			<button type="submit">Add analysis</button>
+		</form>
+		<table>
+			<thead><tr><th>Id</th><th>Test</th><th>Result</th><th>Unit</th><th>Reference range</th><th>Taken at</th><th></th></tr></thead>
+			<tbody id="analyses-body"></tbody>
+		</table>
+	</section>
+</div>
+
+<script>
+	let token = null;
+	let selectedUserId = null;
+
+	function showError(message) {
+		document.getElementById('error').textContent = message || '';
+	}
+
+	async function api(path, options = {}) {
+		const response = await fetch(path, {
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...(token ? { Authorization: 'Bearer ' + token } : {}),
+				...(options.headers || {})
+			}
+		});
+		if (!response.ok) {
+			let detail = response.status + ' ' + response.statusText;
+			try {
+				const body = await response.json();
+				if (body.detail) detail = body.detail;
+			} catch (ignored) {}
+			throw new Error(detail);
+		}
+		if (response.status === 204) return null;
+		return response.json();
+	}
+
+	document.getElementById('login-form').addEventListener('submit', async (event) => {
+		event.preventDefault();
+		showError('');
+		const username = document.getElementById('login-username').value;
+		const password = document.getElementById('login-password').value;
+		try {
+			const result = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+			token = result.token;
+			document.getElementById('login-section').style.display = 'none';
+			document.getElementById('app').style.display = 'block';
+			await loadUsers();
+		} catch (err) {
+			showError('Login failed: ' + err.message);
+		}
+	});
+
+	document.getElementById('logout-btn').addEventListener('click', () => {
+		token = null;
+		selectedUserId = null;
+		document.getElementById('app').style.display = 'none';
+		document.getElementById('login-section').style.display = 'block';
+	});
+
+	async function loadUsers() {
+		showError('');
+		try {
+			const page = await api('/api/users');
+			const body = document.getElementById('users-body');
+			body.innerHTML = '';
+			for (const user of page.content) {
+				const row = document.createElement('tr');
+				if (user.id === selectedUserId) row.classList.add('selected');
+				row.innerHTML =
+					'<td>' + user.id + '</td><td>' + user.fullName + '</td><td>' + user.email + '</td>' +
+					'<td><button class="secondary" data-user-id="' + user.id + '">View analyses</button></td>';
+				body.appendChild(row);
+			}
+			body.querySelectorAll('button[data-user-id]').forEach((btn) => {
+				btn.addEventListener('click', () => selectUser(Number(btn.dataset.userId)));
+			});
+		} catch (err) {
+			showError('Failed to load users: ' + err.message);
+		}
+	}
+
+	document.getElementById('user-form').addEventListener('submit', async (event) => {
+		event.preventDefault();
+		showError('');
+		const fullName = document.getElementById('user-fullName').value;
+		const email = document.getElementById('user-email').value;
+		try {
+			await api('/api/users', { method: 'POST', body: JSON.stringify({ fullName, email }) });
+			document.getElementById('user-form').reset();
+			await loadUsers();
+		} catch (err) {
+			showError('Failed to create user: ' + err.message);
+		}
+	});
+
+	async function selectUser(userId) {
+		selectedUserId = userId;
+		document.getElementById('analyses-section').style.display = 'block';
+		document.getElementById('selected-user-label').textContent = '#' + userId;
+		await loadUsers();
+		await loadAnalyses();
+	}
+
+	async function loadAnalyses() {
+		if (!selectedUserId) return;
+		showError('');
+		try {
+			const analyses = await api('/api/users/' + selectedUserId + '/analyses');
+			const body = document.getElementById('analyses-body');
+			body.innerHTML = '';
+			for (const a of analyses) {
+				const row = document.createElement('tr');
+				row.innerHTML =
+					'<td>' + a.id + '</td><td>' + a.testName + '</td><td>' + a.resultValue + '</td>' +
+					'<td>' + (a.unit || '') + '</td><td>' + (a.referenceRange || '') + '</td><td>' + a.takenAt + '</td>' +
+					'<td><button class="danger" data-analysis-id="' + a.id + '">Delete</button></td>';
+				body.appendChild(row);
+			}
+			body.querySelectorAll('button[data-analysis-id]').forEach((btn) => {
+				btn.addEventListener('click', () => deleteAnalysis(Number(btn.dataset.analysisId)));
+			});
+		} catch (err) {
+			showError('Failed to load analyses: ' + err.message);
+		}
+	}
+
+	document.getElementById('analysis-form').addEventListener('submit', async (event) => {
+		event.preventDefault();
+		showError('');
+		const body = {
+			testName: document.getElementById('analysis-testName').value,
+			resultValue: document.getElementById('analysis-resultValue').value,
+			unit: document.getElementById('analysis-unit').value || null,
+			referenceRange: document.getElementById('analysis-referenceRange').value || null,
+			takenAt: document.getElementById('analysis-takenAt').value
+		};
+		try {
+			await api('/api/users/' + selectedUserId + '/analyses', { method: 'POST', body: JSON.stringify(body) });
+			document.getElementById('analysis-form').reset();
+			await loadAnalyses();
+		} catch (err) {
+			showError('Failed to create analysis: ' + err.message);
+		}
+	});
+
+	async function deleteAnalysis(id) {
+		showError('');
+		try {
+			await api('/api/analyses/' + id, { method: 'DELETE' });
+			await loadAnalyses();
+		} catch (err) {
+			showError('Failed to delete analysis: ' + err.message);
+		}
+	}
+</script>
+
+</body>
+</html>
