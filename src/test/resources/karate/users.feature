@@ -6,7 +6,7 @@ Feature: Users API
     * configure headers = { Authorization: '#("Bearer " + auth.token)' }
 
   Scenario: create a user returns 201 with a Location header
-    * def email = 'karate-' + karate.uuid() + '@example.com'
+    * def email = 'karate-' + java.util.UUID.randomUUID() + '@example.com'
     Given path '/api/users'
     And request { fullName: 'Karate User', email: '#(email)' }
     When method post
@@ -22,7 +22,7 @@ Feature: Users API
     And match response.status == 400
 
   Scenario: create a user with a duplicate email returns 409
-    * def email = 'karate-dup-' + karate.uuid() + '@example.com'
+    * def email = 'karate-dup-' + java.util.UUID.randomUUID() + '@example.com'
     Given path '/api/users'
     And request { fullName: 'First', email: '#(email)' }
     When method post
@@ -35,7 +35,7 @@ Feature: Users API
     And match response.status == 409
 
   Scenario: get a user by id returns 200
-    * def email = 'karate-get-' + karate.uuid() + '@example.com'
+    * def email = 'karate-get-' + java.util.UUID.randomUUID() + '@example.com'
     Given path '/api/users'
     And request { fullName: 'Gettable User', email: '#(email)' }
     When method post
