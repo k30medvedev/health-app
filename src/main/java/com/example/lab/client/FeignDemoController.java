@@ -25,7 +25,7 @@ public class FeignDemoController {
 
 	@GetMapping("/users")
 	public List<UserResponse> findAllUsers() {
-		return userApiClient.findAll();
+		return userApiClient.findAll().content();
 	}
 
 	@GetMapping("/users/{id}")

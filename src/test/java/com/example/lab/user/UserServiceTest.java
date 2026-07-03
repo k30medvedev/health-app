@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,14 +76,15 @@ class UserServiceTest {
 
 	@Test
 	void findAll_returnsMappedUsers() {
-		given(userRepository.findAll()).willReturn(List.of(
+		var pageable = PageRequest.of(0, 20);
+		given(userRepository.findAll(pageable)).willReturn(new PageImpl<>(List.of(
 				new User("First", "first@example.com"),
 				new User("Second", "second@example.com")
-		));
+		)));
 
-		var result = userService.findAll();
+		var result = userService.findAll(pageable);
 
-		assertThat(result).hasSize(2)
+		assertThat(result.getContent()).hasSize(2)
 				.extracting(UserResponse::email)
 				.containsExactly("first@example.com", "second@example.com");
 	}

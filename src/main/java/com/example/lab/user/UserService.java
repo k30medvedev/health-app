@@ -2,10 +2,11 @@ package com.example.lab.user;
 
 import com.example.lab.common.ConflictException;
 import com.example.lab.common.NotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -23,13 +24,17 @@ public class UserService {
 			throw new ConflictException("User with email '%s' already exists".formatted(request.email()));
 		}
 		var user = new User(request.fullName(), request.email());
-		return UserResponse.from(userRepository.save(user));
+		try {
+			return UserResponse.from(userRepository.save(user));
+		} catch (DataIntegrityViolationException ex) {
+			// A concurrent request may have inserted the same email between the existsByEmail
+			// check above and this save; the unique constraint catches what the check missed.
+			throw new ConflictException("User with email '%s' already exists".formatted(request.email()));
+		}
 	}
 
-	public List<UserResponse> findAll() {
-		return userRepository.findAll().stream()
-				.map(UserResponse::from)
-				.toList();
+	public Page<UserResponse> findAll(Pageable pageable) {
+		return userRepository.findAll(pageable).map(UserResponse::from);
 	}
 
 	public UserResponse findById(Long id) {

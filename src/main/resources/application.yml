@@ -30,6 +30,12 @@ clients:
   health-app:
     base-url: http://localhost:${server.port}
 
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
 feign:
   client:
     config:

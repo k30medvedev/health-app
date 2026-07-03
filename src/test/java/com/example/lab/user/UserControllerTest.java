@@ -6,6 +6,7 @@ import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -72,14 +73,14 @@ class UserControllerTest {
 
 	@Test
 	void findAll_returnsUsers() throws Exception {
-		given(userService.findAll()).willReturn(List.of(
+		given(userService.findAll(any())).willReturn(new PageImpl<>(List.of(
 				new UserResponse(1L, "Test User", "test.user@example.com", Instant.now())
-		));
+		)));
 
 		mockMvc.perform(get("/api/users"))
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$[0].email").value("test.user@example.com"));
+				.andExpect(jsonPath("$.content[0].email").value("test.user@example.com"));
 	}
 
 	@Test
