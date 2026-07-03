@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: health-app
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:h2:mem:healthdb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
