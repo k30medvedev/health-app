@@ -1,1 +1,1 @@
-rootProject.name = "spring-security-lab"
+rootProject.name = "health-app"
