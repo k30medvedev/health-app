@@ -28,7 +28,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.6.1"
+          gradle-version: "9.8.1"
 
       - name: Run Gatling simulation
         run: gradle gatlingRun -DbaseUrl=http://localhost:8080 --no-daemon
